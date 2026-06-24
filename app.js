@@ -580,19 +580,24 @@
 
         var html = '';
         customers.forEach(function(c) {
-            var totalIn = 0, totalOut = 0, cnt = 0;
+            var actualIn = 0;
+            var actualOut = 0;
+            var cnt = 0;
 
             bills.forEach(function(b) {
                 if (b.customerId === c.id) {
                     cnt++;
-                    if (b.type === 'income') totalIn += b.grandTotal;
-                    else totalOut += b.grandTotal;
+                    var paidForBill = getBillPaid(b.id);
+                    if (b.type === 'income') {
+                        actualIn += paidForBill;
+                    } else {
+                        actualOut += paidForBill;
+                    }
                 }
             });
 
-            var net = totalIn - totalOut;
+            var net = actualIn - actualOut;
 
-            // Only show if has bills in this company OR always show
             html += '<div class="customer-card" style="border-left-color:' + (net >= 0 ? '#22c55e' : (cnt === 0 ? '#667eea' : '#ef4444')) + ';">' +
                 '<div class="cust-top"><div>' +
                 '<div class="cust-name">👤 ' + esc(c.name) + '</div>' +
@@ -603,8 +608,8 @@
                 '<div class="cust-detail">' + cnt + ' bill' + (cnt !== 1 ? 's' : '') + ' (this company)</div>' +
                 '</div><div class="cust-stats">' +
                 (cnt > 0 ? (
-                    '<div style="color:#22c55e;">Sale: ' + fmt(totalIn) + '</div>' +
-                    '<div style="color:#ef4444;">Purchase: ' + fmt(totalOut) + '</div>' +
+                    '<div style="color:#22c55e;">Received: ' + fmt(actualIn) + '</div>' +
+                    '<div style="color:#ef4444;">Paid: ' + fmt(actualOut) + '</div>' +
                     '<div style="font-weight:700;margin-top:4px;padding-top:4px;border-top:1px solid #eee;color:' + (net >= 0 ? '#22c55e' : '#ef4444') + ';">' +
                         'Net: ' + (net >= 0 ? '+' : '−') + fmt(net) +
                     '</div>'
@@ -1012,8 +1017,11 @@
         document.getElementById('pay-amount').value = '';
         document.getElementById('pay-note').value = '';
         showPayBillInfo();
+        updatePayBillDropdown();
         updateSummary();
         renderPaymentHistory();
+        renderCustomers();  // <-- Customer tab bhi refresh
+        renderBills();      // <-- Bills tab bhi refresh
     });
 
     function renderPaymentHistory() {
