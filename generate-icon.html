@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Icons</title></head>
+<body style="padding:20px;font-family:Arial;">
+<h2>App Icon Generator</h2>
+<canvas id="c" width="512" height="512"></canvas>
+<br><br>
+<button onclick="dl(512)">📥 Download 512x512</button>
+<button onclick="dl(192)">📥 Download 192x192</button>
+
+<script>
+function draw(size) {
+    var c = document.getElementById('c');
+    c.width = size;
+    c.height = size;
+    var x = c.getContext('2d');
+
+    // Background gradient
+    var g = x.createLinearGradient(0, 0, size, size);
+    g.addColorStop(0, '#667eea');
+    g.addColorStop(1, '#764ba2');
+    x.fillStyle = g;
+
+    // Rounded rectangle
+    var r = size * 0.18;
+    x.beginPath();
+    x.moveTo(r, 0);
+    x.lineTo(size - r, 0);
+    x.quadraticCurveTo(size, 0, size, r);
+    x.lineTo(size, size - r);
+    x.quadraticCurveTo(size, size, size - r, size);
+    x.lineTo(r, size);
+    x.quadraticCurveTo(0, size, 0, size - r);
+    x.lineTo(0, r);
+    x.quadraticCurveTo(0, 0, r, 0);
+    x.closePath();
+    x.fill();
+
+    // Book emoji / Rupee symbol
+    x.fillStyle = 'white';
+    x.font = 'bold ' + (size * 0.35) + 'px Arial';
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText('₹', size / 2, size * 0.4);
+
+    // Small text
+    x.font = 'bold ' + (size * 0.1) + 'px Arial';
+    x.fillText('ACCOUNTING', size / 2, size * 0.72);
+}
+
+function dl(size) {
+    draw(size);
+    var c = document.getElementById('c');
+    var a = document.createElement('a');
+    a.download = 'icon-' + size + '.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+}
+
+draw(512);
+</script>
+</body>
+</html>

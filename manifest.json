@@ -1,0 +1,46 @@
+{
+    "name": "Simple Accounting App",
+    "short_name": "Accounting",
+    "description": "Multi-company offline accounting app",
+    "start_url": "/accounting-app/index.html",
+    "scope": "/accounting-app/",
+    "display": "standalone",
+    "background_color": "#f0f2f5",
+    "theme_color": "#667eea",
+    "orientation": "portrait",
+    "id": "/accounting-app/",
+    "icons": [
+        {
+            "src": "/accounting-app/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/accounting-app/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/accounting-app/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/accounting-app/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/accounting-app/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ]
+}
