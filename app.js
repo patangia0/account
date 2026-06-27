@@ -697,6 +697,14 @@
         var disc = parseFloat(discountEl.value) || 0;
         var grand = Math.max(0, sub + (sub * taxP / 100) - disc);
         var paid = parseFloat(billPaidEl.value) || 0;
+
+        // Paid amount grand total se zyada na ho
+        if (paid > grand && grand > 0) {
+            billPaidEl.value = grand;
+            paid = grand;
+            toast('⚠️ Paid amount total se zyada nahi ho sakta!');
+        }
+
         var rem = Math.max(0, grand - paid);
 
         if (grand > 0 && paid < grand) {
@@ -706,11 +714,10 @@
             remainingBox.style.display = 'none';
         }
     }
-
     // ═════════════════════════════════════════════════════
     // SAVE BILL
     // ═════════════════════════════════════════════════════
-        saveBtnEl.addEventListener('click', function() {
+    saveBtnEl.addEventListener('click', function() {
         var custId = billCustomerEl.value;
         var date = billDateEl.value;
         var type = billTypeEl.value;
@@ -729,7 +736,17 @@
         var taxAmt = sub * taxP / 100;
         var grand = Math.max(0, sub + taxAmt - disc);
 
-        if (paidAmt > grand) { toast('⚠️ Paid amount total se zyada!'); return; }
+        // ── PAID VALIDATION ──
+        if (paidAmt > grand) {
+            paidAmt = grand;
+            billPaidEl.value = grand;
+            toast('⚠️ Paid amount adjust ho gaya — total se zyada nahi ho sakta!');
+        }
+
+        if (paidAmt < 0) {
+            paidAmt = 0;
+            billPaidEl.value = 0;
+        }
 
         var bill = {
             id: editId || uid(),
@@ -753,19 +770,16 @@
 
         if (editId) {
             // ── EDIT MODE ──
-            // Step 1: Purane SAARE payments delete karo is bill ke
             payments = payments.filter(function(p) {
                 return p.billId !== editId;
             });
 
-            // Step 2: Bill update karo
             var idx = -1;
             for (var i = 0; i < bills.length; i++) {
                 if (bills[i].id === editId) { idx = i; break; }
             }
             if (idx !== -1) bills[idx] = bill;
 
-            // Step 3: Naya paid amount add karo (agar > 0)
             if (paidAmt > 0) {
                 payments.push({
                     id: uid(),
