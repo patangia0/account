@@ -710,7 +710,7 @@
     // ═════════════════════════════════════════════════════
     // SAVE BILL
     // ═════════════════════════════════════════════════════
-    saveBtnEl.addEventListener('click', function() {
+        saveBtnEl.addEventListener('click', function() {
         var custId = billCustomerEl.value;
         var date = billDateEl.value;
         var type = billTypeEl.value;
@@ -752,12 +752,38 @@
         };
 
         if (editId) {
+            // ── EDIT MODE ──
+            // Step 1: Purane SAARE payments delete karo is bill ke
+            payments = payments.filter(function(p) {
+                return p.billId !== editId;
+            });
+
+            // Step 2: Bill update karo
             var idx = -1;
-            for (var i = 0; i < bills.length; i++) { if (bills[i].id === editId) { idx = i; break; } }
+            for (var i = 0; i < bills.length; i++) {
+                if (bills[i].id === editId) { idx = i; break; }
+            }
             if (idx !== -1) bills[idx] = bill;
+
+            // Step 3: Naya paid amount add karo (agar > 0)
+            if (paidAmt > 0) {
+                payments.push({
+                    id: uid(),
+                    billId: bill.id,
+                    amount: paidAmt,
+                    mode: payMode,
+                    date: date || today(),
+                    note: 'Updated payment',
+                    createdAt: Date.now()
+                });
+            }
+
+            savePayments();
             toast('✅ Bill updated!');
         } else {
+            // ── NEW BILL ──
             bills.push(bill);
+
             if (paidAmt > 0) {
                 payments.push({
                     id: uid(),
@@ -776,8 +802,10 @@
         saveBills();
         clearForm();
         updateSummary();
+        renderCustomers();
+        renderBills();
     });
-
+    
     document.getElementById('clear-btn').addEventListener('click', clearForm);
 
     function clearForm() {
@@ -921,7 +949,7 @@
     };
 
     // Edit Bill
-    window.editBill = function(id) {
+        window.editBill = function(id) {
         var b = bills.find(function(x) { return x.id === id; });
         if (!b) return;
         editId = id;
@@ -932,18 +960,25 @@
         billNotesEl.value = b.notes || '';
         taxPercentEl.value = b.taxPercent || 0;
         discountEl.value = b.discount || 0;
-        billPaidEl.value = '0';
-        items = b.items.map(function(it) { return { name: it.name, qty: it.qty, price: it.price, total: it.total }; });
+
+        // Current paid amount load karo
+        var currentPaid = getBillPaid(b.id);
+        billPaidEl.value = currentPaid;
+
+        items = b.items.map(function(it) {
+            return { name: it.name, qty: it.qty, price: it.price, total: it.total };
+        });
         renderItems();
         saveBtnEl.textContent = '✏️ Update Bill';
+
         for (var j = 0; j < tabBtns.length; j++) tabBtns[j].classList.remove('active');
         for (var k = 0; k < sections.length; k++) sections[k].classList.remove('active');
         tabBtns[0].classList.add('active');
         document.getElementById('sec-new').classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        toast('✏️ Edit mode');
+        toast('✏️ Edit mode — Paid amount bhi change kar sakte ho');
     };
-
+    
     // ═════════════════════════════════════════════════════
     // PAYMENTS TAB
     // ═════════════════════════════════════════════════════
