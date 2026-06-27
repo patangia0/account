@@ -360,5 +360,35 @@ if ('serviceWorker' in navigator) {
     });
 }
 </script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(function(reg) {
+                // Har 1 minute me update check karo
+                setInterval(function() {
+                    reg.update();
+                }, 60000);
+
+                // Naya SW ready hai to page reload karo
+                reg.addEventListener('updatefound', function() {
+                    var newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'activated') {
+                            // Naya version aaya — reload karo
+                            if (confirm('🔄 Naya update available hai! Reload karein?')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            })
+            .catch(function(err) {
+                console.log('SW fail:', err);
+            });
+    });
+}
+</script>
 </body>
 </html>
