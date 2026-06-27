@@ -1,4 +1,4 @@
-var CACHE_NAME = 'accounting-v6';
+var CACHE_NAME = 'accounting-v7';
 
 var FILES_TO_CACHE = [
     './',
@@ -8,37 +8,50 @@ var FILES_TO_CACHE = [
     './manifest.json'
 ];
 
-// Install — cache all files
+// Install — cache new files
 self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function(cache) {
             return cache.addAll(FILES_TO_CACHE);
         })
     );
+    // Purana SW turant hatao, naya activate karo
     self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate — purana cache DELETE karo
 self.addEventListener('activate', function(event) {
     event.waitUntil(
         caches.keys().then(function(keyList) {
             return Promise.all(
-                keyList.filter(function(key) {
-                    return key !== CACHE_NAME;
-                }).map(function(key) {
-                    return caches.delete(key);
+                keyList.map(function(key) {
+                    // Purane SAARE caches delete
+                    if (key !== CACHE_NAME) {
+                        return caches.delete(key);
+                    }
                 })
             );
         })
     );
+    // Turant control lo sabhi tabs ka
     self.clients.claim();
 });
 
-// Fetch — serve from cache first, fallback to network
+// Fetch — PEHLE NETWORK, fir cache (Network First)
 self.addEventListener('fetch', function(event) {
     event.respondWith(
-        caches.match(event.request).then(function(response) {
-            return response || fetch(event.request);
-        })
+        fetch(event.request)
+            .then(function(response) {
+                // Network se mila → cache me bhi update karo
+                var responseClone = response.clone();
+                caches.open(CACHE_NAME).then(function(cache) {
+                    cache.put(event.request, responseClone);
+                });
+                return response;
+            })
+            .catch(function() {
+                // Network fail → cache se do (offline mode)
+                return caches.match(event.request);
+            })
     );
 });
