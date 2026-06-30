@@ -1,4 +1,4 @@
-var CACHE_NAME = 'accounting-v8';
+var CACHE_NAME = 'accounting-v9';
 
 var FILES_TO_CACHE = [
     './',
