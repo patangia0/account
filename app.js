@@ -1278,6 +1278,194 @@
         toast('📥 CSV downloaded!');
     });
 
+        // ═════════════════════════════════════════════════════
+    // EXPORT FULL BACKUP (JSON)
+    // ═════════════════════════════════════════════════════
+    document.getElementById('export-backup-btn').addEventListener('click', function() {
+        var backup = {
+            version: 6,
+            exportDate: new Date().toISOString(),
+            companies: [],
+            customers: [],
+            allBills: {},
+            allPayments: {}
+        };
+
+        // Load companies
+        try { backup.companies = JSON.parse(localStorage.getItem(COMPANIES_KEY)) || []; }
+        catch(e) { backup.companies = []; }
+
+        // Load shared customers
+        try { backup.customers = JSON.parse(localStorage.getItem(CUSTOMERS_KEY)) || []; }
+        catch(e) { backup.customers = []; }
+
+        // Load bills & payments for each company
+        backup.companies.forEach(function(comp) {
+            try {
+                backup.allBills[comp.id] = JSON.parse(localStorage.getItem(billsKey(comp.id))) || [];
+            } catch(e) {
+                backup.allBills[comp.id] = [];
+            }
+            try {
+                backup.allPayments[comp.id] = JSON.parse(localStorage.getItem(paymentsKey(comp.id))) || [];
+            } catch(e) {
+                backup.allPayments[comp.id] = [];
+            }
+        });
+
+        // Count stats
+        var totalBills = 0;
+        var totalPayments = 0;
+        Object.keys(backup.allBills).forEach(function(key) {
+            totalBills += backup.allBills[key].length;
+        });
+        Object.keys(backup.allPayments).forEach(function(key) {
+            totalPayments += backup.allPayments[key].length;
+        });
+
+        // Download JSON file
+        var jsonStr = JSON.stringify(backup, null, 2);
+        var blob = new Blob([jsonStr], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'accounting_backup_' + today() + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        document.getElementById('backup-info').innerHTML =
+            '✅ Backup exported! | ' +
+            backup.companies.length + ' companies, ' +
+            backup.customers.length + ' customers, ' +
+            totalBills + ' bills, ' +
+            totalPayments + ' payments';
+
+        toast('📥 Backup download ho gaya!');
+    });
+
+    // ═════════════════════════════════════════════════════
+    // IMPORT BACKUP (JSON)
+    // ═════════════════════════════════════════════════════
+    document.getElementById('import-backup-btn').addEventListener('click', function() {
+        var confirmed = confirm(
+            '⚠️ WARNING!\n\n' +
+            'Import karne se PURANA SAARA DATA replace ho jaayega!\n\n' +
+            'Pehle current data ka backup le lein.\n\n' +
+            'Continue karein?'
+        );
+        if (!confirmed) return;
+        document.getElementById('import-file-input').click();
+    });
+
+    document.getElementById('import-file-input').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+
+        // Check file type
+        if (!file.name.endsWith('.json')) {
+            toast('⚠️ Sirf .json file select karein!');
+            e.target.value = '';
+            return;
+        }
+
+        var reader = new FileReader();
+
+        reader.onload = function(event) {
+            try {
+                var backup = JSON.parse(event.target.result);
+
+                // Validate backup structure
+                if (!backup.companies || !backup.customers) {
+                    toast('❌ Invalid backup file! Companies/Customers nahi mila.');
+                    return;
+                }
+
+                if (!Array.isArray(backup.companies) || !Array.isArray(backup.customers)) {
+                    toast('❌ Invalid backup format!');
+                    return;
+                }
+
+                // Double confirm
+                var stats =
+                    backup.companies.length + ' companies, ' +
+                    backup.customers.length + ' customers';
+
+                var totalBills = 0;
+                if (backup.allBills) {
+                    Object.keys(backup.allBills).forEach(function(key) {
+                        totalBills += backup.allBills[key].length;
+                    });
+                }
+                stats += ', ' + totalBills + ' bills';
+
+                var finalConfirm = confirm(
+                    '📦 Backup me hai:\n' +
+                    stats + '\n\n' +
+                    'SAARA current data replace hoga!\n\n' +
+                    'Import karein?'
+                );
+                if (!finalConfirm) return;
+
+                // ── Step 1: Purane company data delete karo ──
+                var oldCompanies = [];
+                try { oldCompanies = JSON.parse(localStorage.getItem(COMPANIES_KEY)) || []; }
+                catch(err) { oldCompanies = []; }
+
+                oldCompanies.forEach(function(comp) {
+                    try { localStorage.removeItem(billsKey(comp.id)); } catch(err) {}
+                    try { localStorage.removeItem(paymentsKey(comp.id)); } catch(err) {}
+                });
+
+                // ── Step 2: Naya data save karo ──
+                // Companies
+                localStorage.setItem(COMPANIES_KEY, JSON.stringify(backup.companies));
+
+                // Customers (shared)
+                localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(backup.customers));
+
+                // Bills & Payments per company
+                if (backup.allBills) {
+                    Object.keys(backup.allBills).forEach(function(compId) {
+                        localStorage.setItem(billsKey(compId), JSON.stringify(backup.allBills[compId]));
+                    });
+                }
+
+                if (backup.allPayments) {
+                    Object.keys(backup.allPayments).forEach(function(compId) {
+                        localStorage.setItem(paymentsKey(compId), JSON.stringify(backup.allPayments[compId]));
+                    });
+                }
+
+                // Active company reset
+                localStorage.removeItem(ACTIVE_KEY);
+
+                // ── Step 3: Reload app ──
+                document.getElementById('backup-info').innerHTML =
+                    '✅ Import successful! ' + stats;
+
+                toast('✅ Data restore ho gaya! Reloading...');
+
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1500);
+
+            } catch (err) {
+                toast('❌ File read error: ' + err.message);
+            }
+        };
+
+        reader.onerror = function() {
+            toast('❌ File read nahi ho paayi!');
+        };
+
+        reader.readAsText(file);
+
+        // Reset file input
+        e.target.value = '';
+    });
+
     // ═════════════════════════════════════════════════════
     // INIT
     // ═════════════════════════════════════════════════════
