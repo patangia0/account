@@ -64,6 +64,24 @@
         <button class="btn btn-outline" id="add-global-cust-btn">+ Add Customer</button>
         <div id="global-cust-list" style="margin-top:12px;"></div>
     </div>
+
+    <!-- Backup Section -->
+    <div class="card" style="margin-top:14px;border-left:4px solid #667eea;">
+        <h2>💾 Backup & Restore</h2>
+        <p style="font-size:0.82rem;color:#888;margin-bottom:12px;">
+            Apna saara data (companies, customers, bills, payments) backup lo ya restore karo.
+        </p>
+        <div class="btn-row">
+            <button class="btn btn-primary" id="export-backup-btn">
+                📥 Export Backup
+            </button>
+            <button class="btn btn-green" id="import-backup-btn">
+                📤 Import Backup
+            </button>
+        </div>
+        <input type="file" id="import-file-input" accept=".json" style="display:none;">
+        <div id="backup-info" style="margin-top:10px;font-size:0.78rem;color:#888;"></div>
+    </div>
 </div>
 
 <!-- ========== SCREEN 2: MAIN APP ========== -->
